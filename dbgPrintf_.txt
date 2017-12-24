@@ -1,0 +1,9 @@
+//////////////////////////////////////////////
+#ifndef dbgprintf
+#define dbgprintf_TEXT_(x) L##x
+#define dbgprintf_PREFIX_ dbgprintf_TEXT_("DBG::")
+
+#define dbgprintf(fmt, ...) {printf(dbgprintf_PREFIX_ dbgprintf_TEXT_("%s(%d) ") dbgprintf_TEXT_(fmt) dbgprintf_TEXT_("\n"), TEXT(__FUNCTION__), __LINE__, __VA_ARGS__);}//@dbg
+
+#endif //dbgprintf
+//////////////////////////////////////////////

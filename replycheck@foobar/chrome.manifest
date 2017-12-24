@@ -1,0 +1,2 @@
+content hoge chrome/content/
+overlay	chrome://messenger/content/messengercompose/messengercompose.xul	chrome://hoge/content/my.xul

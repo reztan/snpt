@@ -1,0 +1,101 @@
+<overlay id="sample"
+        xmlns="http://www.mozilla.org/keymaster/gatekeeper/there.is.only.xul">
+    <script type="application/x-javascript">
+<![CDATA[
+function LOG(msg) {
+  var consoleService = Components.classes["@mozilla.org/consoleservice;1"]
+                                 .getService(Components.interfaces.nsIConsoleService);
+  consoleService.logStringMessage(msg);
+}
+
+
+
+var CompFields2RecipientsOrig = CompFields2Recipients;
+CompFields2Recipients = function(msgCompFields) {
+		if (msgCompFields.to)
+		{ /*// toがある=返信、toがない=転送と予想し返信のみ処理*/
+			LOG("ppp@");
+			LOG(msgCompFields.to);
+			
+			
+			// 元メール取得
+			var uri = gMsgCompose.originalMsgURI;
+			if (uri) 
+			{// 元メール無し== 新規メールと予想
+				var CQmessenger = Components.classes["@mozilla.org/messenger;1"].createInstance();
+				CQmessenger = CQmessenger.QueryInterface(Components.interfaces.nsIMessenger);
+				var hdr = CQmessenger.messageServiceFromURI(uri).messageURIToMsgHdr(uri);
+				// 送信者のメアド
+				var from = hdr.mime2DecodedAuthor;
+				if (from.match(/<(.*@.*)>/i)) {
+					LOG(RegExp.$1);
+					from = RegExp.$1;
+				}
+				// 返信先アドレスに送信者が無い場合たぶんReply指定と予想する
+				var pos_com = msgCompFields.to.indexOf(from)
+				if (pos_com == -1) {
+					var flg = false;
+					
+					if (true) {// メーリングリスト内からの場合返信先追加しない場合trueにする。falseの場合、ML内でも直接指定を追加
+						// toのメーリングリストの有無を取得
+						var pos_ml = -1;
+						var fruits;
+						pos_ml = msgCompFields.to.indexOf("ntg55_aap_all@sasso.co.jp");
+						fruits = ["okufuji.yuki@hik-jv.jp",
+						"osaki.yasuhiro@hik-jv.jp",
+						"tanaka.toshiyuki@hik-jv.jp",
+						"egami.yasuhiro@hik-jv.jp",
+						"hitomi.yoshikazu@hik-jv.jp",
+						"iwasaki.hiroaki@hik-jv.jp",
+						"tagami.shinobu@hik-jv.jp",
+						"matsushita.yasushi@hik-jv.jp",
+						"okamoto.hideaki@hik-jv.jp",
+						"matsubara.soichiro@hik-jv.jp",
+						"mitsutake.masaoki@hik-jv.jp",
+						"mimatsu.reiji@hik-jv.jp"];
+						if (pos_ml < 0) {
+							pos_ml = msgCompFields.to.indexOf("ntg55_aap_sasso@sasso.co.jp");
+							fruits = ["okufuji.yuki@hik-jv.jp",
+							"osaki.yasuhiro@hik-jv.jp",
+							"tanaka.toshiyuki@hik-jv.jp",
+							"egami.yasuhiro@hik-jv.jp",
+							"hitomi.yoshikazu@hik-jv.jp",
+							"iwasaki.hiroaki@hik-jv.jp",
+							"tagami.shinobu@hik-jv.jp"];
+						}
+						// 返信先アドレスにメーリングリストがある場合たぶんMLから配信されている
+						if (pos_ml >= 0)
+						{
+							LOG("@***1");
+							LOG(from);
+							// 元送信者がMLに含まれる場合重複がうざいのでチェック
+							fruits.forEach(function (item, index, array) {
+							  if(from.indexOf(item) >= 0) {
+							  	flg = true;
+							  }
+							});
+						}
+					}
+					// 返信先に送信元(from)を追加
+					if (! flg) {
+						var prompts = Components.classes["@mozilla.org/embedcomp/prompt-service;1"]
+	                        .getService(Components.interfaces.nsIPromptService);
+						var result = prompts.confirm(window, "alert", "宛先に元メールの送信者が見つかりません.宛先に追加する?");
+						if (result)
+						{
+							msgCompFields.to=from+","+msgCompFields.to
+							LOG("add from");
+						}
+					}
+				}
+			}
+		}
+		else
+		{
+			LOG("nul@");
+		}
+	CompFields2RecipientsOrig(msgCompFields);
+};
+]]>
+</script>
+</overlay>
