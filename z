@@ -1,0 +1,76 @@
+require 'base64'
+class XorShift
+    def initialize(x=123456789,y=362436069,z=521288629,w=88675123)
+        @kkk = Fiber.new do
+            while true do
+                t=x^(x<<11&0xFFFFFFFF)
+                x,y,z=y,z,w
+                w=(w^(w>>19))^(t^(t>>8))
+                Fiber.yield(w)
+            end
+        end
+    end
+    def next
+        return @kkk.resume
+    end
+end
+
+class ARY
+    def initialize(a=[1,2,3,4,5])
+        @a=a
+        @pos=0
+    end
+    def next
+
+        r = @a[@pos]
+        @pos = (@pos + 1) % @a.length
+        return r
+    end
+end
+
+
+
+def xors(val, enc)
+    ret = []
+    val.each_index do |i|
+        ret << (val[i] ^ (enc.next & 0xFF))
+    end
+    return ret
+end
+
+def shift(val, enc)
+    ret = []
+    val.each do |e|
+        sh = (enc.next % 8)
+
+        ret << (((e << sh)&0xFF) | (e >> (8-sh)))
+    end
+    return ret
+end
+def rshift(val, enc)
+    ret = []
+    val.each do |e|
+        sh = (enc.next % 8)
+
+        ret << ((e >> sh) | ((e << (8-sh))&0xFF))
+    end
+    return ret
+end
+
+def enc(a, kval)
+    k = XorShift.new(kval)
+    n=shift(xors(a, XorShift.new(kval)), k)
+end
+
+def dec(a,kval)
+    m = rshift(a, XorShift.new(kval))
+    r = xors(m, XorShift.new(kval))
+end
+
+str = "sdfasdfa"
+pstr = str.unpack("C*")
+p n = enc(pstr, 123)
+p s = Base64.encode64(n.pack("C*"))
+p "---"
+n = Base64.decode64(s).unpack("C*")
+p dec(n, 123).pack("C*")
